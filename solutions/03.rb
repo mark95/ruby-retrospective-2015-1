@@ -1,6 +1,6 @@
 class Integer
   def prime?
-    not (self == 1 || (2...self).any? { |x| self % x == 0 } )
+    not (self == 1 or (2...self).any? { | x | self % x == 0 } )
   end
 end
 

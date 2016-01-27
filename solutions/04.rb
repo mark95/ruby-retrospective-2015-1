@@ -33,6 +33,7 @@ end
 
 class Deck
   include Enumerable
+
   def ranks
     ranks = [ *(2..10), :jack, :queen, :king, :ace].freeze
   end
@@ -49,8 +50,8 @@ class Deck
     deck == [] ? @deck = basic_deck.flatten : @deck = deck.flatten
   end
 
-  def each(&block)
-        @deck.each(&block)
+  def each
+    @deck.each { |card| yield card }
   end
 
   def size
@@ -58,11 +59,11 @@ class Deck
   end
 
   def draw_top_card
-  @deck.shift
+    @deck.shift
   end
 
   def draw_bottom_card
-  @deck.pop
+    @deck.pop
   end
 
   def top_card
@@ -140,14 +141,7 @@ class BeloteHand
   end
 
   def highest_of_suit(suit)
-    ranks,count = [7, 8, 9, :jack, :queen, :king, 10, :ace].freeze, 0
-    while(count < 8)
-      if (@basic_hand.include?(Card.new(ranks[count],suit)))
-      max = Card.new(ranks[count],suit)
-      end
-    count += 1
-    end
-    max
+    BeloteDeck.new(@basic_hand.select { |card| card.suit == suit }).sort.first
   end
 
   def belote?
@@ -158,17 +152,12 @@ class BeloteHand
   end
 
   def find_consecutive?(count)
-    suits,flag = [:spades, :hearts, :diamonds, :clubs].freeze, false
-    ranks = [ :ace, 10, :king, :queen, :jack, 9, 8, 7]
-    ranks.each_cons(count) do |cons|
-      if ((cons & @hand[:spades]) == cons || (cons & @hand[:hearts]) == cons)
-          flag = true
-      end
-      if((cons & @hand[:diamonds]) == cons || (cons & @hand[:clubs]) == cons)
-          flag = true
-      end
+    suits = [:spades, :hearts, :diamonds, :clubs].freeze
+    ranks = [ :ace, 10, :king, :queen, :jack, 9, 8, 7].freeze
+    ranks.each_cons(count).any? do |cons|
+      (cons & @hand[:spades]) == cons || (cons & @hand[:hearts]) == cons ||
+        (cons & @hand[:diamonds]) == cons || (cons & @hand[:clubs]) == cons
     end
-    flag
   end
 
   def tierce?
@@ -228,13 +217,7 @@ class SixtySixHand
 
   def twenty?(trump_suit)
     suits = [:spades, :hearts, :diamonds, :clubs]
-    suits.delete(trump_suit)
-    twenties = (0...3).map do |index|
-      include_queen = @hand.include?(Card.new(:queen, suits[index]))
-      include_king = @hand.include?(Card.new(:king, suits[index]))
-      include_queen and include_king
-    end
-    twenties.any? { |element| element == true }
+    suits.select { |suit| suit != trump_suit }.any? { |suit| forty?(suit) }
   end
 
   def forty?(trump_suit)
